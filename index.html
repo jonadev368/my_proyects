@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glow Gym - Reproductor Loop</title>
+    <style>
+        /* Diseño base con la imagen que subiste */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url('fondo.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Contenedor estilo deportivo y moderno */
+        .contenedor {
+            background-color: rgba(25, 25, 35, 0.85);
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(255, 30, 86, 0.3);
+            border: 2px solid #ff1e56;
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: #ff1e56;
+            margin-bottom: 5px;
+            font-size: 26px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255, 30, 86, 0.5);
+        }
+
+        .subtitulo {
+            font-size: 13px;
+            color: #ffacb7;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+        }
+
+        .seccion {
+            background-color: rgba(40, 40, 55, 0.7);
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h3 {
+            margin-top: 0;
+            color: #00e5ff;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 30px;
+        }
+
+        /* Botón de Auto Song (Estilo Gamer/Gym) */
+        .btn-auto {
+            background: linear-gradient(45deg, #ff1e56, #ffacb7);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 30, 86, 0.4);
+            transition: all 0.3s ease;
+            width: 100%;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        .btn-auto:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 20px #ff1e56;
+        }
+
+        .btn-auto.activo {
+            background: linear-gradient(45deg, #00e5ff, #00838f);
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.4);
+        }
+
+        /* Estilo del botón de subir archivo */
+        input[type="file"] {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor">
+        <h1>Gym Beats</h1>
+        <div class="subtitulo">Proyecto Final de Informática</div>
+
+        <div class="seccion">
+            <h3>⚡ Control Automático</h3>
+            <button class="btn-auto" id="btnAuto">Auto Song: APAGADO</button>
+        </div>
+
+        <div class="seccion">
+            <h3>🎵 Audio Base (Gym Track)</h3>
+            <audio id="audioDefecto" controls>
+                <source src="musica_defecto.mp3" type="audio/mpeg">
+                Tu navegador no soporta audio.
+            </audio>
+        </div>
+
+        <div class="seccion">
+            <h3>📂 Cargar tu propia rutina (.mp3)</h3>
+            <input type="file" id="inputAudio" accept=".mp3">
+            <audio id="audioUsuario" controls style="margin-top: 15px; display: none;"></audio>
+        </div>
+    </div>
+
+    <script>
+        const inputAudio = document.getElementById('inputAudio');
+        const audioUsuario = document.getElementById('audioUsuario');
+        const audioDefecto = document.getElementById('audioDefecto');
+        const btnAuto = document.getElementById('btnAuto');
+
+        let autoSongActivo = false;
+
+        // Lógica del botón Auto Song
+        btnAuto.addEventListener('click', function() {
+            autoSongActivo = !autoSongActivo;
+
+            if (autoSongActivo) {
+                btnAuto.textContent = "Auto Song: ENCENDIDO ⚡";
+                btnAuto.classList.add('activo');
+                
+                // Si el usuario ya subió una canción, la reproduce en bucle automáticamente
+                if (audioUsuario.src) {
+                    reproducirEnBucle();
+                } else {
+                    // Si no ha subido nada, arranca la de defecto automáticamente
+                    audioDefecto.loop = true;
+                    audioDefecto.play().catch(e => console.log("Haz clic en la página primero"));
+                }
+            } else {
+                btnAuto.textContent = "Auto Song: APAGADO";
+                btnAuto.classList.remove('activo');
+                // Desactivar bucles y pausar todo
+                audioDefecto.loop = false;
+                audioUsuario.loop = false;
+                audioDefecto.pause();
+                audioUsuario.pause();
+            }
+        });
+
+        // Función especial para configurar el bucle automático del usuario
+        function reproducirEnBucle() {
+            audioDefecto.pause();
+            audioUsuario.loop = true; 
+            audioUsuario.style.display = "block"; 
+            audioUsuario.play().catch(error => {
+                alert("Para activar el Auto Song, interactúa primero con la página.");
+            });
+        }
+
+        // Escuchar cuando el usuario sube su archivo .mp3
+        inputAudio.addEventListener('change', function(evento) {
+            const archivo = evento.target.files[0];
+
+            if (archivo) {
+                const urlArchivo = URL.createObjectURL(archivo);
+                audioUsuario.src = urlArchivo;
+
+                // Si el botón de Auto Song está encendido, se reproduce solo y en bucle inmediatamente
+                if (autoSongActivo) {
+                    reproducirEnBucle();
+                } else {
+                    // Si el botón está apagado, solo muestra el reproductor para que el usuario le dé Play manual
+                    audioDefecto.pause();
+                    audioUsuario.style.display = "block";
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
