@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glow Gym - Reproductor Loop</title>
+    <title>Glow Gym - Multi Playlist Loop</title>
     <style>
-        /* Diseño base con la imagen que subiste */
+        /* Diseño base con la imagen del gatito */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url('fondo.jpg');
@@ -100,11 +100,27 @@
             box-shadow: 0 4px 15px rgba(0, 229, 255, 0.4);
         }
 
-        /* Estilo del botón de subir archivo */
+        /* Input de archivos */
         input[type="file"] {
             margin-top: 10px;
             font-size: 13px;
             color: #ccc;
+        }
+
+        /* Lista de canciones cargadas */
+        .lista-canciones {
+            text-align: left;
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 10px;
+            max-height: 80px;
+            overflow-y: auto;
+            padding-left: 15px;
+        }
+        
+        .cancion-activa {
+            color: #00e5ff;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -128,9 +144,13 @@
         </div>
 
         <div class="seccion">
-            <h3>📂 Cargar tu propia rutina (.mp3)</h3>
-            <input type="file" id="inputAudio" accept=".mp3">
+            <h3>📂 Cargar tu playlist de rutina (.mp3)</h3>
+            <p style="font-size: 12px; color: #666; margin: 5px 0;">Puedes seleccionar varias canciones a la vez</p>
+            <input type="file" id="inputAudio" accept=".mp3" multiple>
+            
             <audio id="audioUsuario" controls style="margin-top: 15px; display: none;"></audio>
+            
+            <div class="lista-canciones" id="listaCanciones"></div>
         </div>
     </div>
 
@@ -139,10 +159,13 @@
         const audioUsuario = document.getElementById('audioUsuario');
         const audioDefecto = document.getElementById('audioDefecto');
         const btnAuto = document.getElementById('btnAuto');
+        const listaCanciones = document.getElementById('listaCanciones');
 
         let autoSongActivo = false;
+        let playlist = []; 
+        let indiceActual = 0; 
 
-        // Lógica del botón Auto Song
+        // Lógica del botón Auto Song (Solo para la música por defecto)
         btnAuto.addEventListener('click', function() {
             autoSongActivo = !autoSongActivo;
 
@@ -150,51 +173,74 @@
                 btnAuto.textContent = "Auto Song: ENCENDIDO ⚡";
                 btnAuto.classList.add('activo');
                 
-                // Si el usuario ya subió una canción, la reproduce en bucle automáticamente
-                if (audioUsuario.src) {
-                    reproducirEnBucle();
-                } else {
-                    // Si no ha subido nada, arranca la de defecto automáticamente
+                // Si NO hay canciones del usuario sonando, arranca la de defecto en bucle
+                if (playlist.length === 0) {
                     audioDefecto.loop = true;
-                    audioDefecto.play().catch(e => console.log("Haz clic en la página primero"));
+                    audioDefecto.play().catch(e => console.log("Interactúa primero con la página"));
                 }
             } else {
                 btnAuto.textContent = "Auto Song: APAGADO";
                 btnAuto.classList.remove('activo');
-                // Desactivar bucles y pausar todo
                 audioDefecto.loop = false;
-                audioUsuario.loop = false;
                 audioDefecto.pause();
-                audioUsuario.pause();
             }
         });
 
-        // Función especial para configurar el bucle automático del usuario
-        function reproducirEnBucle() {
-            audioDefecto.pause();
-            audioUsuario.loop = true; 
-            audioUsuario.style.display = "block"; 
-            audioUsuario.play().catch(error => {
-                alert("Para activar el Auto Song, interactúa primero con la página.");
-            });
+        // Escuchar cuando el usuario sube sus archivos .mp3
+        inputAudio.addEventListener('change', function(evento) {
+            const archivos = evento.target.files;
+            playlist = []; 
+            listaCanciones.innerHTML = ""; 
+            indiceActual = 0;
+
+            if (archivos.length > 0) {
+                for (let i = 0; i < archivos.length; i++) {
+                    playlist.push({
+                        nombre: archivos[i].name,
+                        url: URL.createObjectURL(archivos[i])
+                    });
+                    
+                    const item = document.createElement('div');
+                    item.id = "track-" + i;
+                    item.textContent = (i + 1) + ". " + archivos[i].name;
+                    listaCanciones.appendChild(item);
+                }
+
+                // Apagamos el audio base por completo para oír la nueva playlist
+                audioDefecto.pause(); 
+                audioUsuario.style.display = "block"; 
+
+                // TRUCO: Se reproduce automáticamente la primera canción de la playlist
+                // justo en cuanto el usuario termina de subirlas (porque ya interactuó con el botón)
+                reproducirPlaylist();
+            }
+        });
+
+        // Función para reproducir la canción actual de la lista del usuario
+        function reproducirPlaylist() {
+            if (playlist.length === 0) return;
+
+            // Marcar visualmente cuál canción está activa
+            for (let i = 0; i < playlist.length; i++) {
+                document.getElementById("track-" + i).className = (i === indiceActual) ? "cancion-activa" : "";
+            }
+
+            audioUsuario.src = playlist[indiceActual].url;
+            audioUsuario.loop = false; // Desactivado para que pueda pasar a la siguiente canción
+            audioUsuario.play().catch(error => console.log(error));
         }
 
-        // Escuchar cuando el usuario sube su archivo .mp3
-        inputAudio.addEventListener('change', function(evento) {
-            const archivo = evento.target.files[0];
-
-            if (archivo) {
-                const urlArchivo = URL.createObjectURL(archivo);
-                audioUsuario.src = urlArchivo;
-
-                // Si el botón de Auto Song está encendido, se reproduce solo y en bucle inmediatamente
-                if (autoSongActivo) {
-                    reproducirEnBucle();
-                } else {
-                    // Si el botón está apagado, solo muestra el reproductor para que el usuario le dé Play manual
-                    audioDefecto.pause();
-                    audioUsuario.style.display = "block";
+        // LA NUEVA REGLA FIJA: Cuando termine una canción, pasará a la otra de forma obligatoria
+        audioUsuario.addEventListener('ended', function() {
+            if (playlist.length > 0) {
+                indiceActual++; // Cambiar a la canción que sigue
+                
+                // Si se acaban las canciones subidas, reinicia la playlist desde la primera (Bucle infinito de tu lista)
+                if (indiceActual >= playlist.length) {
+                    indiceActual = 0;
                 }
+                
+                reproducirPlaylist(); // Inicia la otra canción automáticamente
             }
         });
     </script>
