@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glow Gym - Multi Playlist Loop</title>
+    <style>
+        /* Diseño base con la imagen del gatito */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url('fondo.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Contenedor estilo deportivo y moderno */
+        .contenedor {
+            background-color: rgba(25, 25, 35, 0.85);
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(255, 30, 86, 0.3);
+            border: 2px solid #ff1e56;
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: #ff1e56;
+            margin-bottom: 5px;
+            font-size: 26px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255, 30, 86, 0.5);
+        }
+
+        .subtitulo {
+            font-size: 13px;
+            color: #ffacb7;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+        }
+
+        .seccion {
+            background-color: rgba(40, 40, 55, 0.7);
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h3 {
+            margin-top: 0;
+            color: #00e5ff;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 30px;
+        }
+
+        /* Botón de Auto Song (Estilo Gamer/Gym) */
+        .btn-auto {
+            background: linear-gradient(45deg, #ff1e56, #ffacb7);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 30, 86, 0.4);
+            transition: all 0.3s ease;
+            width: 100%;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        .btn-auto:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 20px #ff1e56;
+        }
+
+        .btn-auto.activo {
+            background: linear-gradient(45deg, #00e5ff, #00838f);
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.4);
+        }
+
+        /* Input de archivos */
+        input[type="file"] {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #ccc;
+        }
+
+        /* Lista de canciones cargadas */
+        .lista-canciones {
+            text-align: left;
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 10px;
+            max-height: 80px;
+            overflow-y: auto;
+            padding-left: 15px;
+        }
+        
+        .cancion-activa {
+            color: #00e5ff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor">
+        <h1>Gym Beats</h1>
+        <div class="subtitulo">Proyecto Final de Informática</div>
+
+        <div class="seccion">
+            <h3>⚡ Control Automático</h3>
+            <button class="btn-auto" id="btnAuto">Auto Song: APAGADO</button>
+        </div>
+
+        <div class="seccion">
+            <h3>🎵 Audio Base (Gym Track)</h3>
+            <audio id="audioDefecto" controls>
+                <source src="musica_defecto.mp3" type="audio/mpeg">
+                Tu navegador no soporta audio.
+            </audio>
+        </div>
+
+        <div class="seccion">
+            <h3>📂 Cargar tu playlist de rutina (.mp3)</h3>
+            <p style="font-size: 12px; color: #666; margin: 5px 0;">Puedes seleccionar varias canciones a la vez</p>
+            <input type="file" id="inputAudio" accept=".mp3" multiple>
+            
+            <audio id="audioUsuario" controls style="margin-top: 15px; display: none;"></audio>
+            
+            <div class="lista-canciones" id="listaCanciones"></div>
+        </div>
+    </div>
+
+    <script>
+        const inputAudio = document.getElementById('inputAudio');
+        const audioUsuario = document.getElementById('audioUsuario');
+        const audioDefecto = document.getElementById('audioDefecto');
+        const btnAuto = document.getElementById('btnAuto');
+        const listaCanciones = document.getElementById('listaCanciones');
+
+        let autoSongActivo = false;
+        let playlist = []; 
+        let indiceActual = 0; 
+
+        // Lógica del botón Auto Song (Solo para la música por defecto)
+        btnAuto.addEventListener('click', function() {
+            autoSongActivo = !autoSongActivo;
+
+            if (autoSongActivo) {
+                btnAuto.textContent = "Auto Song: ENCENDIDO ⚡";
+                btnAuto.classList.add('activo');
+                
+                // Si NO hay canciones del usuario sonando, arranca la de defecto en bucle
+                if (playlist.length === 0) {
+                    audioDefecto.loop = true;
+                    audioDefecto.play().catch(e => console.log("Interactúa primero con la página"));
+                }
+            } else {
+                btnAuto.textContent = "Auto Song: APAGADO";
+                btnAuto.classList.remove('activo');
+                audioDefecto.loop = false;
+                audioDefecto.pause();
+            }
+        });
+
+        // Escuchar cuando el usuario sube sus archivos .mp3
+        inputAudio.addEventListener('change', function(evento) {
+            const archivos = evento.target.files;
+            playlist = []; 
+            listaCanciones.innerHTML = ""; 
+            indiceActual = 0;
+
+            if (archivos.length > 0) {
+                for (let i = 0; i < archivos.length; i++) {
+                    playlist.push({
+                        nombre: archivos[i].name,
+                        url: URL.createObjectURL(archivos[i])
+                    });
+                    
+                    const item = document.createElement('div');
+                    item.id = "track-" + i;
+                    item.textContent = (i + 1) + ". " + archivos[i].name;
+                    listaCanciones.appendChild(item);
+                }
+
+                // Apagamos el audio base por completo para oír la nueva playlist
+                audioDefecto.pause(); 
+                audioUsuario.style.display = "block"; 
+
+                // TRUCO: Se reproduce automáticamente la primera canción de la playlist
+                // justo en cuanto el usuario termina de subirlas (porque ya interactuó con el botón)
+                reproducirPlaylist();
+            }
+        });
+
+        // Función para reproducir la canción actual de la lista del usuario
+        function reproducirPlaylist() {
+            if (playlist.length === 0) return;
+
+            // Marcar visualmente cuál canción está activa
+            for (let i = 0; i < playlist.length; i++) {
+                document.getElementById("track-" + i).className = (i === indiceActual) ? "cancion-activa" : "";
+            }
+
+            audioUsuario.src = playlist[indiceActual].url;
+            audioUsuario.loop = false; // Desactivado para que pueda pasar a la siguiente canción
+            audioUsuario.play().catch(error => console.log(error));
+        }
+
+        // LA NUEVA REGLA FIJA: Cuando termine una canción, pasará a la otra de forma obligatoria
+        audioUsuario.addEventListener('ended', function() {
+            if (playlist.length > 0) {
+                indiceActual++; // Cambiar a la canción que sigue
+                
+                // Si se acaban las canciones subidas, reinicia la playlist desde la primera (Bucle infinito de tu lista)
+                if (indiceActual >= playlist.length) {
+                    indiceActual = 0;
+                }
+                
+                reproducirPlaylist(); // Inicia la otra canción automáticamente
+            }
+        });
+    </script>
+
+</body>
+</html>
